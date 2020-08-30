@@ -1,0 +1,54 @@
+-----------regex replace extract
+from pyspark.sql.functions import regexp_replace,regexp_extract,col
+
+#create new column-emp length cleaned 
+regex_string="\\d+"
+#in regex extract,extract all the digits
+df_sel.select(regexp_extract(col("emp_length"),regex_string,0).alias("emplenghth_cleaned"),col("emp_length")).show()
+
+#assign it to a df
+#regexp_replace(str or col, pattern, replacement)
+#df.withcolum(colname,col)
+
+always see inner query first
+-------------------------------------------------------------------------------
+Grouby vs Partition by ===keep rows intact(so use dietinct toavoid duplicate rows
+
+over (partition by)
+##syntax:select .... windowsfunc over(PARTITION BY colname1 ORDER BY colname2 DESC) as new colname3
+------------
+%sql
+
+select distinct listing_id, neighbourhood, price, count(listing_id) over (partition by listing_id order by listing_id) as review_cnt from (
+select listing_id, neighbourhood, price, reviewer_id 
+from listing a left join reviews b on a.id = b.listing_id)
+------------------------------------
+Rank(1,2,3,3,5) vs Dense Rank(1,2,3,3,4...)
+
+%sql
+
+select
+id, neighbourhood, price, review_cnt,
+dense_rank() OVER (PARTITION BY neighbourhood ORDER BY review_cnt DESC) as rank
+from
+(
+select distinct id, neighbourhood, price, count(id) over (partition by id order by id) as review_cnt from (
+select a.id, neighbourhood, price, reviewer_id 
+from listing a left join reviews b on a.id = b.listing_id
+) 
+)
+-------------------------------------------------
+Always use Groupby or where condition when aggreagted 
+%sql
+
+select room_type, avg(trim_func(price)) as avg_price, count(*) as count from listing group by room_type
+
+---------explode function to increase no of rows
+%sql
+
+select amenities, split, exploded
+from (
+select amenities, split(amenities, ",") as split from listing
+) LATERAL VIEW explode(split) as exploded limit 10
+
+------------------------------

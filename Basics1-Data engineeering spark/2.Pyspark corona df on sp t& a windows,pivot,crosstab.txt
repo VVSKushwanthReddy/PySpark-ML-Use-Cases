@@ -1,0 +1,31 @@
+Usage of F for sql functions vs aggregation(see nect cokmmand)
+
+import pyspark.sql.functions as F
+corona_df.groupBy("Country","State_cleaned").agg(F.max("Date")).show()
+
+------------------
+
+For multiple aggregartions
+corona_max_df.groupBy("Country").agg({'Confirmed':'sum','Recovered':'sum','Death':'sum'}).orderBy("sum(Confirmed)", ascending=False).show()
+
+----------------------------
+Joining on multiple columns
+corona_df.join(corona_df.groupBy("Country","State_cleaned").agg(F.max("Date").alias("Date")),on=['Country', 'State_cleaned','Date'],how="inner").show()
+----------------
+-----------------------------------------------------------------
+Row number () usage
+
+--from pyspark.sql.functions import row_number
+from pyspark.sql.window import Window
+
+ws=Window().partitionBy("Country","State_cleaned").orderBy(col("Date").desc())
+
+corona_df.withColumn("row_num", row_number().over(ws)).show()
+
+-------------------------corona_df.withColumn("row_num", row_number().over(ws)).where(col("row_num")==1).show()
+
+------------PIVOT TABLE(FOR COLUMNAR )
+corona_df.groupby("Country").pivot("Date").agg(F.sum("Confirmed")).show()
+
+-------------------------For cross tab ,just see if it is present ,but doesnt count
+corona_df.filter("Country=='US'").crosstab("State","Date").show()

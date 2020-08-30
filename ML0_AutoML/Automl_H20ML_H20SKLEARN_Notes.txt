@@ -1,0 +1,85 @@
+AutoML helps in reducing repetitive tasks while building ML pipeline.
+1.Repetitive:Hyperparameter tuning of each model could go 100 times 
+3.Neuralnetwork: How many filters?,
+ What activation function ?
+4.Model and hyperparameter selection
+
+Doesnt do Feature engineering& interpretaion of results 
+--------------------------------------------------------------
+Complete iterative process,this tool helps in 
+
+AutoML free tools :
+1.AutoSklearn
+2.AutoViml
+3.AutoGloan(by AWS)
+4.Autokeras
+
+AUTOML ENTERPRISE:
+1.H2o driver AI
+2.Data robot
+
+------------------------
+------------------------------------------------
+Google collab is web based service .Colab is a free Jupyter notebook environment that runs entirely in the cloud
+C can levarage Gpu xgboost processing  
+
+---------------------------H20AUtoML is written in Java
+1.Does preprocessing like imputation,datacleaninig,one hot encoding
+2.Model selection Nice leaderbord view of models
+3.parameter tuning,Hyperparameter selection
+4.Gives deployment code in mojo(binary format)
+
+Doesnt do Feature engineering& interpretaion of results ,it needs to be done by doamin people
+---------------------------------------------------Sai_H2O_AutoML.ipynb 
+from h2o.automl import H2OAutoML
+def :aml = H2OAutoML(max_models = 10, seed = 10, exclude_algos = ["StackedEnsemble", "DeepLearning"], verbosity="info", nfolds=0)
+training: aml.train(x = x, y = y, training_frame = churn_train, validation_frame=churn_valid)  
+lb = aml.leaderboard #defaultmetric is AUC(area under curve)
+
+=====================on testing data,"StackedEnsemble"(stack of lea models) always wins
+churn_pred=aml.leader.predict(churn_test)
+aml.leader.model_performance(churn_test)
+
+model_ids = list(aml.leaderboard['model_id'].as_data_frame().iloc[:,0])
+model_ids
+
+-----------------------------just selecting XGboost
+out = h2o.get_model([mid for mid in model_ids if "XGBoost" in mid][0])
+out.params
+ 
+#converting h20 parameters in to xgboost parameters  
+out.convert_H2OXGBoostParams_2_XGBoostParams()
+
+out_gbm = h2o.get_model([mid for mid in model_ids if "GBM" in mid][0])
+
+
+out.confusion_matrix()
+out.varimp_plot()
+
+aml.leader.download_mojo(path = "./")
+
+------------------------------------------------------AUTOML COmparisons
+
+1.H20 automl is best does all
+
+2.AutoSklearn does Onehotencoding. 
+a.doesnt do preprocessing of imputaion .Cant take string cols have to convert them in to int.
+b.manullay do ordinalencoding
+c.Atoml final creates Ensemled model(sum of all models) (finally1,no leaderboard)
+
+#def automl
+automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task=120, per_run_time_limit=30, n_jobs=2,
+    include_estimators=["random_forest", "sgd", ], exclude_estimators=None, include_preprocessors=["no_preprocessing", ], exclude_preprocessors=None)
+	
+# Hyperparameter
+ automl.cv_results_['params'][np.argmax(automl.cv_results_['mean_test_score'])]
+ 
+#downloading finalised model
+import pickle
+x = automl.show_models()
+results = {"ensemble": x}
+pickle.dump(results, open('churn.pickle','wb'))
+ 
+ 
+3.AutoViml doesnt do preprocessing of imputaion & Onehotencoding.Cant take string cols have to convert them in to int
+

@@ -1,0 +1,164 @@
+
+Always create a pipeline of 
+Pipleline has stages below 
+transformers=df is input&output(missing values,onehot encoding) and 
+Estimators=df is input&output(for model)
+
+outputcolumn:
+features == all input columns
+lable=  target column
+
+
+Stages=preprocessing +feature engineering
+   =transformers(cat in to numbers)+trans2(using one hot encoding)+trans3(Imputationss)+trans4(target col to label) 
+----------------------------------------------------------------------------
+Split data in to train and test data
+
+churn_df = df
+(train_data, test_data) = churn_df.randomSplit([0.7, 0.3], 24)
+
+----------------------
+stages= []
+
+for catCol in catColumns:
+
+    stringIndexer = StringIndexer(inputCol=catCol, outputCol=catCol + "Index")
+
+    encoder = OneHotEncoderEstimator(inputCols=[stringIndexer.getOutputCol()], outputCols=[catCol + "catVec"])
+
+    stages += [stringIndexer, encoder]
+--------------------------------------------------------
+Stringindexer= To convert categorical(A,B,C) to numeric(0,1,2) and then apply one hot encoding.
+
+iterate categorical value in to numerical and index it(col+"index")
+--------------------------------------------------------
+onehotencoder(inputcol=take outputcolumn of stringindexer,outputocl= col+"catVec"== to converta a cat var in to multiple columns))
+
+Adding Label and fit the data:
+label_Idx = StringIndexer(inputCol="Churn", outputCol="label")
+stages += [label_Idx]
+
+------------------------
+Stringindexer= for target variable ,only stringindex is enough= (inpcol="targetcolumn",outcol="label") (make it "label")
+
+Take stringindexer of target variable and use fit function to fit training data in to it.Add it to stages
+ 
+ temp=label_Idx.fit(train_data).transform(train_data)
+ 
+ above on ecreates a col="label" from col="churn" from index0 to x.0 being most visible(based on high count of churn col) no=0,yes=1
+----------------------------------------------------
+
+ Stages=trans1(cat in to numbers)+trans2(using one hot encoding)+trans3(Imputationss)+trans4(target col to label) 
+ 
+---------------------------------------------------
+#Feature Engineering:lets create 3 buckets of short,medium & Long tenure
+
+from pyspark.ml.feature import QuantileDiscretizer
+tenure_bin = QuantileDiscretizer(numBuckets=3, inputCol="tenure", outputCol="tenure_bin")
+stages += [tenure_bin]
+
+Ex:above one creates 3 buckets for Tenure column(1-72) then 1-24,25-48,49-72
+-----------------------------------------------------
+vectorassembler = like array ,u assemble all input columns together and create outputcol so that model can run it
+#newly generated col due to transformations, but not added to df column.
+ex:
+assembleInputs =allcategorical+numericalcolumns
+assembler = VectorAssembler(inputCols=assembleInputs, outputCol="features")
+
+-------------------------------------
+#using stages on train data,Apply Fitting of train data 
+
+from pyspark.ml import Pipeline
+piplin1=Pipeline.setstages(stages u defined up there)
+pipelinemodel=piplin1.fit(train_data)
+
+pipelinemodel.stages tail contains below
+
+StringIndexer_1629f1f9bdac,   = cat to int
+ OneHotEncoderEstimator_fb535473df1e,  =onehotencoder col to n col
+ Imputer_9f89221c5ee5,   =imputation
+ StringIndexer_1acf8c61d4d0,    = for target col make it a slabel
+ Bucketizer_a504915a1987,    =tenure col to 3 buck in a col
+ VectorAssembler_8593f5599d3f
+
+--------------------------------------------------
+# fitting pipelinemodel for Transforming the (train_data)&(train_data) ,data before giving it to the model
+
+trainprepDF = pipelineModel.transform(train_data)
+testprepDF = pipelineModel.transform(train_data)
+
+trainprepDF &testprepDF will have all transformed data containini original and transformed columns including label in both train&test df
+
+------------------------------Modelling
+define logistic regression 
+# Create initial LogisticRegression model
+lr = LogisticRegression(labelCol="label", featuresCol="features", maxIter=10)
+
+-------------------------------------
+#fitting and training with lr model to (stages applied trainprepdf) 
+lrmodel=lr.fit(trainprepDF) 
+summary=lrmodel.summary
+
+see metrics on train data by summary.metrics 
+
+#####Apply built model on test data
+predictions=lrm.transform(testdata)
+
+#above predictions dataframe will have new columns["rawprediicions","probability","prediction"]
+you can compare between label and prediction
+
+display(lrModel, trainprepDF, "ROC")
+display(lrModel, trainprepDF, "fittedVsResiduals")
+--------------------------------------------------------
+define evaluator
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+predictions = lrModel.transform(testprepDF)
+
+evaluatorLR  ==== Binaryeval()
+evaluatorLR.evaluate("predictions")	  
+
+Evaluate the model by checking with test data
+#default evaluation is areaUnderROC
+evaluatorLR.getMetricName()
+------------------------------
+##find manual difference between "prediction" and "label" by using Binary Classification metrics
+
+from pyspark.mllib.evaluation import BinaryClassificationMetrics
+
+results = predictions.select(['prediction', 'label'])
+ 
+## prepare score-label set
+results_collect = results.collect()
+results_list = [(float(i[0]), float(i[1])) for i in results_collect]
+predictionAndLabels = sc.parallelize(results_list)
+ 
+metrics = BinaryClassificationMetrics(predictionAndLabels)
+
+------------------------------------------2nd model building
+# Grid search Optimisation algorithm lets u  select the best parameters for your optimization problem from a list of parameter options that you provide, hence automating the 'trial-and-error' method.
+Regularisation parameter for overfitting
+
+from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
+
+# Create ParamGrid for Cross Validation
+paramGrid = (ParamGridBuilder()
+             .addGrid(lr.regParam, [0.01, 0.5, 2.0])
+             .addGrid(lr.elasticNetParam, [0.0, 0.5, 1.0])
+             .addGrid(lr.maxIter, [5, 10, 20])
+             .build())
+-----------------------crossvalidating
+
+# Run cross validations,actual model training ,time taking of 5 min
+cv = CrossValidator(estimator=lr, estimatorParamMaps=paramGrid, evaluator=evaluatorLR, numFolds=5)
+
+cvModel = cv.fit(trainprepDF)
+
+#predictions df will genearte "rawprediction","probability","prediction"
+predictions = cvModel.bestModel.transform(testprepDF)
+
+#By default evaluator give Area under the curve
+evaluatorLR.evaluate(predictions)
+-------------------
+hyderabad_servicing@lichousing.com
+3 months payslip
+3 months bank ststemnet

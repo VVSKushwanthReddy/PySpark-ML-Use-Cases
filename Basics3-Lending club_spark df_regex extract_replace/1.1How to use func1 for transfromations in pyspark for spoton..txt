@@ -1,0 +1,76 @@
+Spark SQL and Dataframes are going to be executed in the same way
+----------------------------------------------
+display(df_reviews.describe())
+it gives summary statistics of that df
+-----------------------------------------
+using not nullfunctions
+
+df_review_fil=df_reviews.filter(f.col("reviewer_id").cast("int").isNotNull().alias("Value "))
+------------------------------------------------
+to know from where the data is taken and how it is executing use explain()
+df_reviews.groupBy("listing_id").count().explain()
+
+---------------------------------------------------
+#lambda function= arguments : expression
+-----------------------------------------------------
+#to covert string to dateformat and datetype
+udf=user defined function
+
+from datetime import datetime
+dfunc =  udf (lambda x: datetime.strptime(x, '%m/%d/%Y'), DateType())
+spark.udf.register("datec",dfunc) # to use in spark sql
+
+-----------------------------------------------
+Grouping by multiple 
+aggDF = df.groupby('borough', 'contributing_factor_vehicle_1').agg(f.sum('number_of_persons_injured').alias('injuries')).orderBy('borough', 'injuries', ascending=False)
+aggDF = aggDF.filter(aggDF.injuries > 1)
+display(aggDF)
+
+or
+df.select("list.id").groupBy("list.id").count().sort(desc("count")).show()
+
+https://hackingandslacking.com/learning-apache-spark-with-pyspark-databricks-9a26adba0cee
+
+explode() splits multiple entries in a column into multiple rows:
+from pyspark.sql.functions import explode
+explodedDF = df.select(explode("data").alias("d"))
+display(explodedDF)
+
+---------------------------------------------------
+The below will return a DataFrame which only contains rows where the author column has a value of todd:
+filter_df = explode_df.filter(explode_df.author == "todd")
+display(filter_df)
+
+We can also use sort() to order our results:
+filter_df = explode_df.filter(explode_df.author == "todd").sort(explode_df.published_at)
+display(filter_df)
+
+.where() is another way of achieving the same effect:
+where_df = explode_df.where((col("firstName") == "todd")).sort(desc("published_at"))
+display(where_df)
+
+---------------------------------------
+while performing join operations always use alias for exection 
+-------------------------
+Markdown
+Copy to clipboardCopy
+%md # Hello This is a Title
+------------------------
+col("ok").isNull()
+
+--------------------------
+select("list.id", "rev.listing_id").filter(col("rev.listing_id").isNull()).distinct().count()
+----------------------
+user defined funtion
+
+from pyspark.sql.types import FloatType
+
+def trim_char(string):
+    return string.strip('$')
+
+spark.udf.register("trim_func", trim_char)
+
+trim_func_udf = udf(trim_char)
+
+df_listing.select("property_type","price",trim_func_udf("price").cast(FloatType()).alias("price_f")).groupBy("property_type").agg(({"price_f":"average"})).show()
+--------------------------------------------------------------------------------

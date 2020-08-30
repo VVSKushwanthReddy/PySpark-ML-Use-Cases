@@ -1,0 +1,52 @@
+
+KOALAS(runs spark jobs by using spark engine)-supports all fucntions of pandas (just replace pd as ks) & new func
+Pandas(runs on local engine)
+Spark(runs on distributed nodes)
+
+pandas has indexing ,spark doesnt have indexing
+Koalas df has sql query function whereas spark&pandas doesnt
+
+lambda function:pandas and koals ,not in spark df
+---------------------------------------------------------------------------
+Koalas - local vs distributed mode
+The Koalas project makes data scientists more productive when interacting with big data, by implementing the pandas DataFrame API on top of Apache Spark. pandas is the de facto standard (single-node) DataFrame implementation in Python, while Spark is the de facto standard for big data processing. With this package, you can:
+
+Be immediately productive with Spark, with no learning curve, if you are already familiar with pandas.
+
+Have a single codebase that works both with pandas (tests, smaller datasets) and with Spark (distributed datasets).
+
+--------------------------------------------------------------------------------------
+Distributed python API which can run on spark
+
+Pandas and numpy are memory dependent
+1.(u have to load ur memory and process it)
+2.can run on only single node 
+3.there is a way by chunking it (limitation is processing. it takes lot of time to process)
+
+------------------------------------------------------------------------------
+Dask API runs Pandas in to distributed nodes
+
+cuda dataframe is siilar to pandas
+
+spark is efficient engine for  distributed nodes..
+
+------------------------------------------------Idea of koalas framwork is to resemble pandas API in spark,Runs on top of Pyspark
+existing project from pandas to spark(use koalas)
+
+===================================for pands to work ,data has to be in single location(local) rather than in multiple nodes
+
+KOALAS(runs spar jobs by using spark engine) is chunking ur data in more distributed way
+
+--------------------------------------------------
+
+Install spark on collab:  https://spark.apache.org/docs/latest/cluster-overview.html
+1.AS spark is written in scala,download jvm (java 8 version)
+2.install spark binary componenthadoop
+
+----------
+
+
+
+
+
+

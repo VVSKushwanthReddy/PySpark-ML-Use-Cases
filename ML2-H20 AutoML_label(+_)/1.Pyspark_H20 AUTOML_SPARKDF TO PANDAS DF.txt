@@ -1,0 +1,51 @@
+Pandas data frames: are in-memory, single-server. So their size is limited by your server memory, and you will process them with the power of a single server.
+
+Spark SQL data frames: are distributed on your spark cluster so their size is limited by the size of your cluster. If you need to put more data, you just need to add more nodes in your cluster, it is scalable.
+
+pysparkling
+pyarrow
+-------------------------------------------------Arrow to pandas
+Enable the arrow transmission while converting Spark df to Pandas
+
+spark.conf.set("spark.sql.execution.arrow.enabled", "true")
+
+crp_df=credit_df.toPandas()
+
+
+or else time consuming down like
+it will do native serialisation by
+
+Take the object 
+pickle it
+serialize it
+send over network
+Deserialize it
+--------------------------------------------replace column with int,double dtype
+
+credit_df=credit_df.withColumn("c14", col("c14").cast("int")).withColumn("c2", col("c2").cast("double"))
+
+--------------------------APPLYING AUTOML on Raw data
+from pysparkling.ml import H20AUTOML
+H20AUTOML_Estimator = H20AUTOML(TIME=60,MODEL_MAX=3,.....)
+
+model=H20AUTOML_Estimator.fit(trainingdata) 
+
+#model will comeup with best model and its ranking
+
+predictions=model.tranform(testdata)
+
+------------------------------creating pipeline for h20automl
+
+stages=transformation+onehotencoding+vectorassembler+ H20AUTOML_Estimator[H20AUTOML(TIME=60,MODEL_MAX=3,.....)]
+
+pipeline1=pipeline.setstages(stages)
+pipelinemodel=pipeline1.fit(traindata)
+
+#pipeline model runs for 60 sec and replace that last stage H20AUTOML_Estimator with selected model
+prediction=pipelinemodel.tranform(testdata)
+prediction.take(10)
+
+#for the model
+laststage=pipelinemodel.stages[-1]
+laststage.getmodelsetails() #fetch details about model along with column names
+------------------------------------------------------------------------

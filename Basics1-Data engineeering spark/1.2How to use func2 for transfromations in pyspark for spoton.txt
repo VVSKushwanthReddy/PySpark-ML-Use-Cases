@@ -1,0 +1,36 @@
+http://spark.apache.org/docs/latest/api/python/pyspark.sql.html#module-pyspark.sql.functions
+------------------------------------------
+
+https://intellipaat.com/community/search?q=pyspark&start=40 = for pyspark communities
+ex;https://intellipaat.com/community/7658/convert-pyspark-string-to-date-format
+--------------------------------------------------------
+Creating tempviews
+
+df_review_summary.createOrReplaceTempView("review_summary")
+---------------------------------------
+
+create permanent table views
+
+#creating a permanent table rather than drop and create
+
+listing_table_name="reviews"
+df_reviews.write.mode("overwrite").format("parquet").saveAsTable(listing_table_name)
+
+--------------------------------------------------------------------------------
+
+
+joins:
+nei_group=df_neigh_count.alias("nc").join(df_neighbourhoods.alias("ne"),col("nc.host_neighbourhood") == col("ne.neighbourhood")).select("nc.*","ne.neighbourhood_group")
+
+display(nei_group)
+
+----------------------------
+#Get airbnb listing with most reviews
+df_listing.alias("list").join(df_reviews.alias("rev"), col("list.id")==col("rev.listing_id")).select("list.id").groupBy("list.id").count().sort("count").show()
+
+----------------------------------
+df_listing.alias("list").join(df_reviews.alias("rev"), col("list.id")==col("rev.listing_id"),how="left").select("list.id","rev.listing_id").groupBy("list.id").count().sort(desc("count")).show()
+
+------------------------------------if we have same col name in both df & creating new column 
+
+df_review_summary=df_review_cnt.join(df_review_dt, "reviewer_id").withColumn("date_diff",datediff("max(datetime)","min(datetime)")).orderBy('count', ascending=False)
